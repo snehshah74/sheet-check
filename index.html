@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sheet Check for Drawing Sets</title>
+  <meta name="description" content="Checks a construction drawing set against its own sheet index. Runs in your browser; try the synthetic sample.">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="hero">
+    <div class="wrap">
+      <header class="top"><span class="brand"><i></i>Sheet Check</span><span class="pill">Runs in your browser · nothing uploaded</span></header>
+      <p class="eyebrow">Drawing-set QA</p>
+      <h1>Sheets drift.<span>Catch it before the field builds from it.</span></h1>
+      <p class="lede">A new issue of the drawings lands. An agent reads every title block, checks the set against its own index and against the last issue, confirms what it can with evidence, and drafts the questions for the design team. You review what is left. It is already running below on a synthetic 24-sheet set with planted problems and planted changes.</p>
+      <div class="actions" id="drop">
+        <button class="btn" id="choose" type="button">Check your own PDF</button>
+        <input id="file" type="file" accept="application/pdf" hidden>
+        <button class="btn ghost" id="sample" type="button">Reload the sample</button>
+        <button class="btn ghost" id="cmp-btn" type="button" hidden>Compare with an earlier issue</button>
+        <input id="prev-file" type="file" accept="application/pdf" hidden>
+        <span class="hint">or drop a PDF anywhere on this page</span>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite">Starting…</p>
+      <ol class="flow" aria-label="Where this sits in the workflow">
+        <li><b>1</b>Upload the new issue</li><li><b>2</b>Agent reads every title block</li><li><b>3</b>Agent checks the index and the last issue</li><li><b>4</b>Agent drafts the follow-ups</li><li><b>5</b>You decide what is left</li><li class="next">→ Sheets the field can trust</li>
+      </ol>
+    </div>
+  </div>
+  <div class="wrap">
+<main class="app" id="app" hidden>
+    <section class="agent card" aria-labelledby="agent-h">
+      <p class="eyebrow">Plan-set agent</p>
+      <h2 id="agent-h">It did the check. You get what's left.</h2>
+      <div class="asum" id="agent-sum"></div>
+      <details open><summary>What it ran</summary><ol class="trace" id="trace"></ol></details>
+      <p class="note" id="agent-note"></p>
+    </section>
+    <div class="score" id="score"></div>
+    <div class="grid">
+      <aside class="side">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tab-issues" aria-selected="true">Problems <b id="n-issues"></b></button>
+          <button role="tab" id="tab-changes" aria-selected="false">Changes <b id="n-changes"></b></button>
+          <button role="tab" id="tab-sheets" aria-selected="false">Sheets <b id="n-sheets"></b></button>
+          <button role="tab" id="tab-drafts" aria-selected="false">Follow-ups <b id="n-drafts"></b></button>
+        </div>
+        <label class="only" id="only-wrap" hidden><input type="checkbox" id="only-review"> Needs review only</label>
+        <ul id="list" class="list"></ul>
+        <button class="btn ghost small" id="csv" type="button">Download sheet log (CSV)</button>
+      </aside>
+
+      <main class="viewer" aria-live="polite">
+        <div class="vhead">
+          <div>
+            <div class="eyebrow" id="v-page"></div>
+            <h2 id="v-title"></h2>
+          </div>
+          <div class="nav">
+            <button class="btn ghost small" id="prev" type="button" aria-label="Previous sheet">←</button>
+            <button class="btn ghost small" id="next" type="button" aria-label="Next sheet">→</button>
+          </div>
+        </div>
+        <div class="fields" id="fields"></div>
+        <div class="stage">
+          <div class="crop"><canvas id="crop"></canvas><div id="overlay"></div></div>
+          <figure class="thumb"><div class="tw"><canvas id="thumb"></canvas><div id="thumb-box"></div></div><figcaption>Whole sheet</figcaption></figure>
+        </div>
+        <ul id="notes" class="notes"></ul>
+        <div class="fix" id="fix" hidden>
+          <span>Correct it:</span>
+          <input id="f-number" aria-label="Sheet number" placeholder="Sheet no.">
+          <input id="f-title" aria-label="Title" placeholder="Title">
+          <input id="f-rev" aria-label="Revision" placeholder="Rev" size="4">
+          <button class="btn small" id="confirm" type="button">Confirm</button>
+        </div>
+      </main>
+    </div>
+  </main>
+
+  <section class="section" id="how">
+    <p class="eyebrow">How it works</p>
+    <h2>Rules you can check, not a model you have to trust.</h2>
+    <div class="cards">
+      <div class="card dark"><h3>No AI model runs here</h3><p>It reads the text and positions already inside the PDF, finds the labelled title-block fields (sheet no., title, revision), and applies plain rules. The same file always gives the same answer, so every flag can be traced to the exact text it came from. That is the boxes you see on each sheet.</p></div>
+      <div class="card"><h3>Every field carries a confidence</h3><p>Read from a labelled field: confident. Found by pattern or by size: marked as a guess. Missing: marked as not found. Only fully labelled sheets count as read. Everything else goes to a person.</p></div>
+      <div class="card"><h3>Where a model would earn its place</h3><p>Scanned sheets and unfamiliar title-block styles. A vision model could read those, but it should propose and a person should confirm, because a confident wrong sheet number is worse than a blank one.</p></div>
+    </div>
+    <h3 style="margin:1.4rem 0 .6rem">What it checks</h3>
+    <ol class="steps">
+      <li>Duplicate sheet numbers across the set</li>
+      <li>Skipped numbers inside a series (A-101, A-103 → is A-102 missing?)</li>
+      <li>Blank or missing revision on a sheet</li>
+      <li>Sheet index vs. the sheets: listed but absent, present but unlisted, revision or title mismatch</li>
+      <li>Pages with no readable text (scans), listed instead of guessed</li>
+    </ol>
+  </section>
+
+  <section class="section limits">
+    <p class="eyebrow">Before you trust it</p>
+    <ul>
+      <li>The sample is synthetic. Real drawings are messier, and your title blocks may use labels it has not seen. On a style it had never seen, the first version auto-approved nothing and sent every sheet to review.</li>
+      <li>It needs a PDF with a text layer. Scanned pages are listed as unreadable, not read.</li>
+      <li>“Skipped number” can be intentional. It flags things to look at; it does not decide.</li>
+      <li>After you correct a sheet, the problem list is not recalculated. Reload to re-run.</li>
+    </ul>
+  </section>
+
+  <footer>Independent prototype. Not affiliated with Shackleton AI. Uses synthetic data. Nothing you open here leaves your browser.</footer>
+  </div>
+
+  <script src="worker-src.js"></script>
+  <script src="sample-data.js"></script>
+  <script src="app.bundle.js"></script>
+</body>
+</html>
